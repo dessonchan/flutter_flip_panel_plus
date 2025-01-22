@@ -54,10 +54,15 @@ class FlipClockPlus extends StatelessWidget {
     String? hoursLabelStr,
     String? minutesLabelStr,
     String? secondsLabelStr,
+    bool showDays = false,
   })  : _showHours = true,
-        _showDays = false,
+        _showDays = showDays,
         _digitBuilder = digitBuilder,
         _separator = separator,
+        _daysLabelStr = daysLabelStr,
+        _hoursLabelStr = hoursLabelStr,
+        _minutesLabelStr = minutesLabelStr,
+        _secondsLabelStr = secondsLabelStr,
         onDone = null,
         super(key: key);
 
@@ -90,10 +95,7 @@ class FlipClockPlus extends StatelessWidget {
           ),
           child: Text(
             '$digit',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: digitSize,
-                color: digitColor),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: digitSize, color: digitColor),
           ),
         );
     _separator = separator ??
@@ -107,8 +109,7 @@ class FlipClockPlus extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             ':',
-            style:
-                TextStyle(fontSize: digitSize, color: digitColor, height: 1.0),
+            style: TextStyle(fontSize: digitSize, color: digitColor, height: 1.0),
           ),
         );
   }
@@ -143,10 +144,7 @@ class FlipClockPlus extends StatelessWidget {
           ),
           child: Text(
             '$digit',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: digitSize,
-                color: digitColor),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: digitSize, color: digitColor),
           ),
         );
     _separator = separator ??
@@ -160,8 +158,7 @@ class FlipClockPlus extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             ':',
-            style:
-                TextStyle(fontSize: digitSize, color: digitColor, height: 1.0),
+            style: TextStyle(fontSize: digitSize, color: digitColor, height: 1.0),
           ),
         );
   }
@@ -204,10 +201,7 @@ class FlipClockPlus extends StatelessWidget {
           ),
           child: Text(
             '$digit',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: digitSize,
-                color: digitColor),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: digitSize, color: digitColor),
           ),
         );
     _separator = separator ??
@@ -221,8 +215,7 @@ class FlipClockPlus extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             ':',
-            style:
-                TextStyle(fontSize: digitSize, color: digitColor, height: 1.0),
+            style: TextStyle(fontSize: digitSize, color: digitColor, height: 1.0),
           ),
         );
   }
@@ -230,11 +223,8 @@ class FlipClockPlus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var time = startTime;
-    final initStream =
-        Stream<DateTime>.periodic(const Duration(milliseconds: 1000), (_) {
-      (countdownMode)
-          ? timeLeft = timeLeft! - const Duration(seconds: 1)
-          : time = time.add(const Duration(seconds: 1));
+    final initStream = Stream<DateTime>.periodic(const Duration(milliseconds: 1000), (_) {
+      (countdownMode) ? timeLeft = timeLeft! - const Duration(seconds: 1) : time = time.add(const Duration(seconds: 1));
 
       if (countdownMode) {
         if (timeLeft == Duration.zero) {
@@ -244,22 +234,18 @@ class FlipClockPlus extends StatelessWidget {
 
       return time;
     });
-    final timeStream =
-        (countdownMode ? initStream.take(timeLeft!.inSeconds) : initStream)
-            .asBroadcastStream();
+    final timeStream = (countdownMode ? initStream.take(timeLeft!.inSeconds) : initStream).asBroadcastStream();
 
     var digitList = <Widget>[];
 
     if (_showDays) {
       digitList.addAll([
         _buildSegment(
-            timeStream,
-            (DateTime time) =>
-                (timeLeft!.inDays > 99) ? 9 : (timeLeft!.inDays ~/ 10),
-            (DateTime time) =>
-                (timeLeft!.inDays > 99) ? 9 : (timeLeft!.inDays % 10),
-            startTime,
-            _daysLabelStr ?? "days"),
+          timeStream,
+          (DateTime time) => (countdownMode ? timeLeft!.inDays : time.day).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(),
+          startTime,
+          _daysLabelStr ?? "days",
+        ),
         Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -279,16 +265,7 @@ class FlipClockPlus extends StatelessWidget {
 
     if (_showHours) {
       digitList.addAll([
-        _buildSegment(
-            timeStream,
-            (DateTime time) => (countdownMode)
-                ? (timeLeft!.inHours % 24) ~/ 10
-                : (time.hour) ~/ 10,
-            (DateTime time) => (countdownMode)
-                ? (timeLeft!.inHours % 24) % 10
-                : (time.hour) % 10,
-            startTime,
-            _hoursLabelStr ?? "Hours"),
+        _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inHours % 24 : time.hour).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime, _hoursLabelStr ?? "Hours"),
         Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -307,21 +284,11 @@ class FlipClockPlus extends StatelessWidget {
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          _showDays ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: _showDays ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: digitList
         ..addAll([
           // Minutes
-          _buildSegment(
-              timeStream,
-              (DateTime time) => (countdownMode)
-                  ? (timeLeft!.inMinutes % 60) ~/ 10
-                  : (time.minute) ~/ 10,
-              (DateTime time) => (countdownMode)
-                  ? (timeLeft!.inMinutes % 60) % 10
-                  : (time.minute) % 10,
-              startTime,
-              _minutesLabelStr ?? "minutes"),
+          _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inMinutes % 60 : time.minute).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime, _minutesLabelStr ?? "minutes"),
 
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -339,51 +306,29 @@ class FlipClockPlus extends StatelessWidget {
           ),
 
           // Seconds
-          _buildSegment(
-              timeStream,
-              (DateTime time) => (countdownMode)
-                  ? (timeLeft!.inSeconds % 60) ~/ 10
-                  : (time.second) ~/ 10,
-              (DateTime time) => (countdownMode)
-                  ? (timeLeft!.inSeconds % 60) % 10
-                  : (time.second) % 10,
-              startTime,
-              _secondsLabelStr ?? "seconds")
+          _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inSeconds % 60 : time.second).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime, _secondsLabelStr ?? "seconds")
         ]),
     );
   }
 
-  _buildSegment(Stream<DateTime> timeStream, Function tensDigit,
-      Function onesDigit, DateTime startTime, String id) {
+  _buildSegment(Stream<DateTime> timeStream, List<int> Function(DateTime) digits, DateTime startTime, String id) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Row(children: [
-          Padding(
+        Row(
+            children: digits(startTime).asMap().entries.map((entry) {
+          return Padding(
             padding: spacing,
             child: FlipPanelPlus<int>.stream(
-              itemStream:
-                  timeStream.map<int>(tensDigit as int Function(DateTime)),
+              itemStream: timeStream.map<int>((DateTime time) => digits(time)[entry.key]),
               itemBuilder: _digitBuilder,
               duration: const Duration(milliseconds: 450),
-              initValue: tensDigit(startTime),
+              initValue: entry.value,
               direction: flipDirection,
               spacing: centerGapSpace,
             ),
-          ),
-          Padding(
-            padding: spacing,
-            child: FlipPanelPlus<int>.stream(
-              itemStream:
-                  timeStream.map<int>(onesDigit as int Function(DateTime)),
-              itemBuilder: _digitBuilder,
-              duration: const Duration(milliseconds: 450),
-              initValue: onesDigit(startTime),
-              spacing: centerGapSpace,
-              direction: flipDirection,
-            ),
-          ),
-        ]),
+          );
+        }).toList()),
         (_showDays)
             ? id.isNotEmpty
                 ? Row(
@@ -493,8 +438,7 @@ class FlipPanelPlus<T> extends StatefulWidget {
     this.direction = FlipDirection.down,
   })  : assert(itemsCount != null),
         assert(startIndex! < itemsCount!),
-        assert(period == null ||
-            period.inMilliseconds >= 2 * duration!.inMilliseconds),
+        assert(period == null || period.inMilliseconds >= 2 * duration!.inMilliseconds),
         indexedItemBuilder = itemBuilder,
         streamItemBuilder = null,
         itemStream = null,
@@ -528,8 +472,7 @@ class FlipPanelPlus<T> extends StatefulWidget {
   _FlipPanelPlusState<T> createState() => _FlipPanelPlusState<T>();
 }
 
-class _FlipPanelPlusState<T> extends State<FlipPanelPlus>
-    with SingleTickerProviderStateMixin {
+class _FlipPanelPlusState<T> extends State<FlipPanelPlus> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation _animation;
   late int? _currentIndex;
@@ -537,8 +480,7 @@ class _FlipPanelPlusState<T> extends State<FlipPanelPlus>
   late bool _isStreamMode;
   late bool _running;
   final _perspective = 0.003;
-  final _zeroAngle =
-      0.0001; // There's something wrong in the perspective transform, I use a very small value instead of zero to temporarily get it around.
+  final _zeroAngle = 0.0001; // There's something wrong in the perspective transform, I use a very small value instead of zero to temporarily get it around.
   late int _loop;
   T? _currentValue, _nextValue;
   Timer? _timer;
@@ -573,8 +515,7 @@ class _FlipPanelPlusState<T> extends State<FlipPanelPlus>
           _running = true;
         });
       });
-    _animation =
-        Tween(begin: _zeroAngle, end: math.pi / 2).animate(_controller);
+    _animation = Tween(begin: _zeroAngle, end: math.pi / 2).animate(_controller);
 
     if (widget.period != null) {
       _timer = Timer.periodic(widget.period!, (_) {
@@ -654,20 +595,14 @@ class _FlipPanelPlusState<T> extends State<FlipPanelPlus>
         if (_child2 != null) {
           _child1 = _child2;
         } else {
-          _child1 = _isStreamMode
-              ? widget.streamItemBuilder!(context, _currentValue)
-              : widget.indexedItemBuilder!(
-                  context, _currentIndex! % widget.itemsCount!);
+          _child1 = _isStreamMode ? widget.streamItemBuilder!(context, _currentValue) : widget.indexedItemBuilder!(context, _currentIndex! % widget.itemsCount!);
         }
         _child2 = null;
         _upperChild1 = _upperChild2 ?? makeUpperClip(_child1!);
         _lowerChild1 = _lowerChild2 ?? makeLowerClip(_child1!);
       }
       if (_child2 == null) {
-        _child2 = _isStreamMode
-            ? widget.streamItemBuilder!(context, _nextValue)
-            : widget.indexedItemBuilder!(
-                context, (_currentIndex! + 1) % widget.itemsCount!);
+        _child2 = _isStreamMode ? widget.streamItemBuilder!(context, _nextValue) : widget.indexedItemBuilder!(context, (_currentIndex! + 1) % widget.itemsCount!);
         _upperChild2 = makeUpperClip(_child2!);
         _lowerChild2 = makeLowerClip(_child2!);
       }
@@ -675,10 +610,7 @@ class _FlipPanelPlusState<T> extends State<FlipPanelPlus>
       if (_child2 != null) {
         _child1 = _child2;
       } else {
-        _child1 = _isStreamMode
-            ? widget.streamItemBuilder!(context, _currentValue)
-            : widget.indexedItemBuilder!(
-                context, _currentIndex! % widget.itemsCount!);
+        _child1 = _isStreamMode ? widget.streamItemBuilder!(context, _currentValue) : widget.indexedItemBuilder!(context, _currentIndex! % widget.itemsCount!);
       }
       _upperChild1 = _upperChild2 ?? makeUpperClip(_child1!);
       _lowerChild1 = _lowerChild2 ?? makeLowerClip(_child1!);
