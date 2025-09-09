@@ -21,6 +21,7 @@ class FlipClockPlus extends StatelessWidget {
   /// Set countdown to true to have a countdown timer.
   final bool countdownMode;
 
+  final bool _showSeconds;
   final bool _showHours;
   final bool _showDays;
 
@@ -55,8 +56,10 @@ class FlipClockPlus extends StatelessWidget {
     String? minutesLabelStr,
     String? secondsLabelStr,
     bool showDays = false,
+    bool showSeconds = false,
   })  : _showHours = true,
         _showDays = showDays,
+        _showSeconds = showSeconds,
         _digitBuilder = digitBuilder,
         _separator = separator,
         _daysLabelStr = daysLabelStr,
@@ -81,6 +84,7 @@ class FlipClockPlus extends StatelessWidget {
     this.centerGapSpace = 0.0,
     this.timeLeft,
   })  : countdownMode = false,
+        _showSeconds = false,
         _showHours = true,
         _showDays = false,
         onDone = null,
@@ -128,9 +132,11 @@ class FlipClockPlus extends StatelessWidget {
     this.height = 60.0,
     this.width = 44.0,
     this.centerGapSpace = 0.0,
+    bool showSeconds = false,
   })  : countdownMode = true,
         startTime = DateTime(2018, 0, 0, 0, 0, duration.inSeconds),
         timeLeft = duration,
+        _showSeconds = showSeconds,
         _showHours = duration.inHours > 0,
         _showDays = false,
         super(key: key) {
@@ -185,6 +191,7 @@ class FlipClockPlus extends StatelessWidget {
         startTime = DateTime(2018, 0, 0, 0, 0, duration.inSeconds),
         _showHours = true,
         _showDays = true,
+        _showSeconds = false,
         timeLeft = duration,
         _daysLabelStr = daysLabelStr,
         _hoursLabelStr = hoursLabelStr,
@@ -236,60 +243,55 @@ class FlipClockPlus extends StatelessWidget {
     });
     final timeStream = (countdownMode ? initStream.take(timeLeft!.inSeconds) : initStream).asBroadcastStream();
 
-    var digitList = <Widget>[];
-
-    if (_showDays) {
-      digitList.addAll([
-        _buildSegment(
-          timeStream,
-          (DateTime time) => (countdownMode ? timeLeft!.inDays : time.day).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(),
-          startTime,
-          _daysLabelStr ?? "days",
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: spacing,
-              child: _separator,
-            ),
-            (_showDays)
-                ? Container(color: Colors.black)
-                : Container(
-                    color: Colors.transparent,
-                  )
-          ],
-        )
-      ]);
-    }
-
-    if (_showHours) {
-      digitList.addAll([
-        _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inHours % 24 : time.hour).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime, _hoursLabelStr ?? "Hours"),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: spacing,
-              child: _separator,
-            ),
-            (_showDays)
-                ? Container(color: Colors.black)
-                : Container(
-                    color: Colors.transparent,
-                  )
-          ],
-        )
-      ]);
-    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: _showDays ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-      children: digitList
-        ..addAll([
-          // Minutes
-          _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inMinutes % 60 : time.minute).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime, _minutesLabelStr ?? "minutes"),
+      children: [
+        if (_showDays) ...[
+          _buildSegment(
+            timeStream,
+            (DateTime time) => (countdownMode ? timeLeft!.inDays : time.day).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(),
+            startTime,
+            _daysLabelStr ?? "days",
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: spacing,
+                child: _separator,
+              ),
+              (_showDays)
+                  ? Container(color: Colors.black)
+                  : Container(
+                      color: Colors.transparent,
+                    )
+            ],
+          )
+        ],
+        if (_showHours) ...[
+          _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inHours % 24 : time.hour).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime,
+              _hoursLabelStr ?? "Hours"),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: spacing,
+                child: _separator,
+              ),
+              (_showDays)
+                  ? Container(color: Colors.black)
+                  : Container(
+                      color: Colors.transparent,
+                    )
+            ],
+          )
+        ],
+        // Minutes
+        _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inMinutes % 60 : time.minute).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(),
+            startTime, _minutesLabelStr ?? "minutes"),
 
+        if (_showSeconds) ...[
           Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -304,10 +306,10 @@ class FlipClockPlus extends StatelessWidget {
                     )
             ],
           ),
-
-          // Seconds
-          _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inSeconds % 60 : time.second).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(), startTime, _secondsLabelStr ?? "seconds")
-        ]),
+          _buildSegment(timeStream, (DateTime time) => (countdownMode ? timeLeft!.inSeconds % 60 : time.second).toString().padLeft(2, "0").characters.map((digit) => int.parse(digit)).toList(),
+              startTime, _secondsLabelStr ?? "seconds"),
+        ],
+      ],
     );
   }
 
